@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRAM SESSION</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+            user-select: none;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            z-index: 1;
+        }
+
+        #game-container {
+            width: 90%;
+            max-width: 400px;
+            z-index: 2;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            letter-spacing: -2px;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #fff, #666);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #333;
+            padding-bottom: 1rem;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 0.2rem;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 4px;
+            background: #222;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timer-fill {
+            height: 100%;
+            background: #fff;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        .timer-fill.danger {
+            background: #ff0040;
+            box-shadow: 0 0 15px rgba(255,0,64,0.8);
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        #sequence-display {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            min-height: 80px;
+            align-items: center;
+        }
+
+        .symbol {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            background: #111;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: default;
+        }
+
+        .symbol.hidden {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .symbol.show {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .symbol.correct {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .symbol.wrong {
+            border-color: #ff0040;
+            background: rgba(255, 0, 64, 0.1);
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        #input-area {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .input-btn {
+            aspect-ratio: 1;
+            border: 2px solid #333;
+            background: #111;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-btn:hover {
+            border-color: #fff;
+            background: #222;
+            transform: translateY(-2px);
+        }
+
+        .input-btn:active {
+            transform: translateY(0) scale(0.95);
+        }
+
+        .input-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #start-screen, #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-primary {
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            background: #fff;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            margin-top: 2rem;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255,255,255,0.3);
+        }
+
+        .instructions {
+            text-align: center;
+            color: #666;
+            line-height: 1.6;
+            max-width: 300px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .final-score {
+            font-size: 4rem;
+            font-weight: 900;
+            margin: 1rem 0;
+            color: #fff;
+        }
+
+        .streak-indicator {
+            position: absolute;
+            top: -30px;
+            right: 0;
+            color: #ff0040;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .streak-indicator.active {
+            opacity: 1;
+            animation: float 1s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .hidden-screen {
+            display: none !important;
+        }
+
+        /* Glitch effect for game over */
+        .glitch {
+            position: relative;
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glitch::before {
+            animation: glitch-1 0.3s infinite linear alternate-reverse;
+            color: #0ff;
+            z-index: -1;
+        }
+
+        .glitch::after {
+            animation: glitch-2 0.3s infinite linear alternate-reverse;
+            color: #f0f;
+            z-index: -2;
+        }
+
+        @keyframes glitch-1 {
+            0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 0); }
+            20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, 0); }
+            40% { clip-path: inset(40% 0 50% 0); transform: translate(-2px, 0); }
+            60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, 0); }
+            80% { clip-path: inset(10% 0 70% 0); transform: translate(-2px, 0); }
+            100% { clip-path: inset(30% 0 20% 0); transform: translate(2px, 0); }
+        }
+
+        @keyframes glitch-2 {
+            0% { clip-path: inset(15% 0 85% 0); transform: translate(2px, 0); }
+            20% { clip-path: inset(65% 0 5% 0); transform: translate(-2px, 0); }
+            40% { clip-path: inset(45% 0 45% 0); transform: translate(2px, 0); }
+            60% { clip-path: inset(85% 0 10% 0); transform: translate(-2px, 0); }
+            80% { clip-path: inset(5% 0 75% 0); transform: translate(2px, 0); }
+            100% { clip-path: inset(25% 0 25% 0); transform: translate(-2px, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="noise"></div>
+    
+    <div id="game-container">
+        <div class="header">
+            <h1>CRAM SESSION</h1>
+            <div class="subtitle">Memory Under Pressure</div>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">Level</div>
+                <div class="stat-value" id="level">1</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Score</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Best</div>
+                <div class="stat-value" id="best">0</div>
+            </div>
+        </div>
+
+        <div class="timer-bar">
+            <div class="timer-fill" id="timer"></div>
+        </div>
+
+        <div id="sequence-display">
+            <!-- Symbols appear here -->
+        </div>
+
+        <div id="input-area">
+            <button class="input-btn" data-symbol="☕" onclick="handleInput('☕')">☕</button>
+            <button class="input-btn" data-symbol="📚" onclick="handleInput('📚')">📚</button>
+            <button class="input-btn" data-symbol="💻" onclick="handleInput('💻')">💻</button>
+            <button class="input-btn" data-symbol="🎧" onclick="handleInput('🎧')">🎧</button>
+            <button class="input-btn" data-symbol="⚡" onclick="handleInput('⚡')">⚡</button>
+            <button class="input-btn" data-symbol="🍕" onclick="handleInput('🍕')">🍕</button>
+        </div>
+
+        <div class="streak-indicator" id="streak">STREAK x<span id="streak-count">1</span></div>
+
+        <!-- Start Screen -->
+        <div id="start-screen">
+            <h1 style="font-size: 3rem; margin-bottom: 0.5rem;">CRAM SESSION</h1>
+            <div class="instructions">
+                Memorize the sequence.<br>
+                Recall it before time runs out.<br>
+                Speed = Bonus Points.<br>
+                One mistake = Game Over.
+            </div>
+            <button class="btn-primary" onclick="startGame()">START</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="hidden-screen">
+            <div style="color: #666; font-size: 0.9rem; letter-spacing: 2px;">SESSION TERMINATED</div>
+            <div class="final-score glitch" data-text="0" id="final-score">0</div>
+            <div style="color: #666; margin-bottom: 0.5rem;">Final Score</div>
+            <div id="performance-msg" style="color: #fff; font-size: 1.1rem; margin-bottom: 2rem;"></div>
+            <button class="btn-primary" onclick="resetGame()">RETRY</button>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let sequence = [];
+        let playerIndex = 0;
+        let level = 1;
+        let score = 0;
+        let bestScore = localStorage.getItem('cramBest') || 0;
+        let timeLeft = 100;
+        let maxTime = 100;
+        let timerInterval = null;
+        let isPlaying = false;
+        let streak = 1;
+        let baseTime = 3000; // Starting time in ms
+
+        const symbols = ['☕', '📚', '💻', '🎧', '⚡', '🍕'];
+        
+        // DOM Elements
+        const sequenceDisplay = document.getElementById('sequence-display');
+        const timerBar = document.getElementById('timer');
+        const levelEl = document.getElementById('level');
+        const scoreEl = document.getElementById('score');
+        const bestEl = document.getElementById('best');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreEl = document.getElementById('final-score');
+        const performanceMsg = document.getElementById('performance-msg');
+        const streakEl = document.getElementById('streak');
+        const streakCountEl = document.getElementById('streak-count');
+        const inputBtns = document.querySelectorAll('.input-btn');
+
+        // Initialize
+        bestEl.textContent = bestScore;
+
+        function startGame() {
+            startScreen.classList.add('hidden-screen');
+            gameOverScreen.classList.add('hidden-screen');
+            sequence = [];
+            level = 1;
+            score = 0;
+            streak = 1;
+            updateStats();
+            nextLevel();
+        }
+
+        function nextLevel() {
+            playerIndex = 0;
+            isPlaying = false;
+            
+            // Add new symbol to sequence
+            const newSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+            sequence.push(newSymbol);
+            
+            // Calculate time based on level (gets harder)
+            const timeForLevel = Math.max(1500, baseTime - (level * 150));
+            maxTime = timeForLevel;
+            timeLeft = 100;
+            
+            displaySequence();
+        }
+
+        function displaySequence() {
+            sequenceDisplay.innerHTML = '';
+            
+            // Create symbol elements
+            sequence.forEach((sym, idx) => {
+                const div = document.createElement('div');
+                div.className = 'symbol';
+                div.textContent = sym;
+                sequenceDisplay.appendChild(div);
+            });
+
+            // Show sequence with animation
+            const symbolEls = sequenceDisplay.querySelectorAll('.symbol');
+            
+            symbolEls.forEach((el, idx) => {
+                setTimeout(() => {
+                    el.classList.add('show');
+                }, idx * 200);
+            });
+
+            // Hide after viewing time then start input phase
+            const viewTime = Math.min(2000, 800 + (sequence.length * 400));
+            
+            setTimeout(() => {
+                symbolEls.forEach(el => {
+                    el.classList.add('hidden');
+                    el.textContent = '?';
+                    el.style.opacity = '0.3';
+                });
+                startInputPhase();
+            }, viewTime);
+        }
+
+        function startInputPhase() {
+            isPlaying = true;
+            timeLeft = 100;
+            timerBar.classList.remove('danger');
+            
+            // Enable buttons
+            inputBtns.forEach(btn => btn.disabled = false);
+            
+            // Start timer
+            const tickRate = 50;
+            const decrement = (100 / (maxTime / tickRate));
+            
+            timerInterval = setInterval(() => {
+                timeLeft -= decrement;
+                timerBar.style.width = timeLeft + '%';
+                
+                if (timeLeft <= 30) {
+                    timerBar.classList.add('danger');
+                }
+                
+                if (timeLeft <= 0) {
+                    gameOver('TIMEOUT');
+                }
+            }, tickRate);
+        }
+
+        function handleInput(symbol) {
+            if (!isPlaying) return;
+            
+            const currentSymbol = sequence[playerIndex];
+            const symbolEls = sequenceDisplay.querySelectorAll('.symbol');
+            
+            if (symbol === currentSymbol) {
+                // Correct
+                symbolEls[playerIndex].textContent = symbol;
+                symbolEls[playerIndex].classList.remove('hidden');
+                symbolEls[playerIndex].classList.add('correct');
+                symbolEls[playerIndex].style.opacity = '1';
+                
+                playerIndex++;
+                
+                // Time bonus for speed
+                const timeBonus = Math.floor(timeLeft / 10);
+                score += (10 * level * streak) + timeBonus;
+                
+                if (playerIndex === sequence.length) {
+                    // Level complete
+                    clearInterval(timerInterval);
+                    streak++;
+                    if (streak > 1) {
+                        streakCountEl.textContent = streak;
+                        streakEl.classList.add('active');
+                        setTimeout(() => streakEl.classList.remove('active'), 1000);
+                    }
+                    score += 50 * level; // Level completion bonus
+                    level++;
+                    updateStats();
+                    
+                    // Disable buttons briefly
+                    inputBtns.forEach(btn => btn.disabled = true);
+                    
+                    setTimeout(() => {
+                        nextLevel();
+                    }, 800);
+                }
+            } else {
+                // Wrong
+                symbolEls[playerIndex].classList.add('wrong');
+                symbolEls[playerIndex].textContent = symbol;
+                symbolEls[playerIndex].classList.remove('hidden');
+                symbolEls[playerIndex].style.opacity = '1';
+                gameOver('WRONG SYMBOL');
+            }
+            
+            updateStats();
+        }
+
+        function gameOver(reason) {
+            isPlaying = false;
+            clearInterval(timerInterval);
+            
+            // Disable all buttons
+            inputBtns.forEach(btn => btn.disabled = true);
+            
+            // Update best score
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('cramBest', bestScore);
+                bestEl.textContent = bestScore;
+            }
+            
+            // Show game over screen
+            setTimeout(() => {
+                finalScoreEl.textContent = score;
+                finalScoreEl.setAttribute('data-text', score);
+                
+                // Performance message
+                if (level <= 3) {
+                    performanceMsg.textContent = "Need more coffee... ☕";
+                    performanceMsg.style.color = '#666';
+                } else if (level <= 6) {
+                    performanceMsg.textContent = "Getting warmed up! 📚";
+                    performanceMsg.style.color = '#fff';
+                } else if (level <= 10) {
+                    performanceMsg.textContent = "Honor Roll Material! 🎓";
+                    performanceMsg.style.color = '#00ff88';
+                } else {
+                    performanceMsg.textContent = "LEGENDARY CRAMMER! 👑";
+                    performanceMsg.style.color = '#ffd700';
+                }
+                
+                gameOverScreen.classList.remove('hidden-screen');
+            }, 500);
+        }
+
+        function updateStats() {
+            levelEl.textContent = level;
+            scoreEl.textContent = score;
+        }
+
+        function resetGame() {
+            gameOverScreen.classList.add('hidden-screen');
+            startGame();
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (!isPlaying) return;
+            
+            const keyMap = {
+                '1': '☕', 'q': '☕', 'a': '☕',
+                '2': '📚', 'w': '📚', 's': '📚',
+                '3': '💻', 'e': '💻', 'd': '💻',
+                '4': '🎧', 'r': '🎧', 'f': '🎧',
+                '5': '⚡', 't': '⚡', 'g': '⚡',
+                '6': '🍕', 'y': '🍕', 'h': '🍕'
+            };
+            
+            if (keyMap[e.key.toLowerCase()]) {
+                handleInput(keyMap[e.key.toLowerCase()]);
+            }
+        });
+
+        // Prevent zoom on double tap (mobile)
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>
