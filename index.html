@@ -97,7 +97,11 @@
             margin-bottom: 1.5rem;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.8rem;
+            background: rgba(255,255,255,0.02);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid #222;
         }
 
         .bar-wrapper {
@@ -112,26 +116,47 @@
         .bar-label {
             width: 60px;
             color: #666;
+            font-weight: bold;
         }
 
         .bar {
             flex: 1;
-            height: 8px;
-            background: #222;
+            height: 10px;
+            background: #1a1a1a;
             position: relative;
             overflow: hidden;
-            border-radius: 4px;
+            border-radius: 5px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
         }
 
         .bar-fill {
             height: 100%;
             transition: width 0.3s ease, background-color 0.3s;
-            border-radius: 4px;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Shine effect on bars */
+        .bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
 
         .combo-fill {
             background: linear-gradient(90deg, #00ff88, #00cc6a);
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
         }
 
         .combo-fill.broken {
@@ -141,16 +166,28 @@
 
         .life-fill {
             background: linear-gradient(90deg, #ff0040, #cc0033);
-            box-shadow: 0 0 10px rgba(255, 0, 64, 0.3);
+            box-shadow: 0 0 15px rgba(255, 0, 64, 0.4);
         }
 
         .life-fill.low {
             animation: pulse 1s infinite;
         }
 
+        .time-fill {
+            background: linear-gradient(90deg, #00d4ff, #0099cc);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+            transition: width 1s linear;
+        }
+
+        .time-fill.critical {
+            background: linear-gradient(90deg, #ff0040, #cc0000);
+            animation: pulse 0.5s infinite;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            50% { opacity: 0.4; }
         }
 
         @keyframes shake {
@@ -180,22 +217,25 @@
             background: #111;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
+            border-radius: 8px;
         }
 
         .symbol.hidden {
             opacity: 0.2;
             border-color: #222;
+            background: #0a0a0a;
         }
 
         .symbol.show {
             animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border-color: #fff;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
         }
 
         .symbol.correct {
             border-color: #00ff88;
             background: rgba(0, 255, 136, 0.1);
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
         }
 
         .symbol.wrong {
@@ -240,13 +280,31 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .input-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .input-btn:hover:not(:disabled)::before {
+            opacity: 1;
         }
 
         .input-btn:hover:not(:disabled) {
             border-color: #fff;
-            background: #222;
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(255,255,255,0.1);
         }
 
         .input-btn:active:not(:disabled) {
@@ -281,6 +339,7 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            font-weight: bold;
         }
 
         .control-btn:hover:not(:disabled) {
@@ -300,6 +359,7 @@
 
         .control-btn.undo:hover:not(:disabled) {
             background: rgba(255, 170, 0, 0.1);
+            box-shadow: 0 0 15px rgba(255, 170, 0, 0.2);
         }
 
         .control-btn.undo:disabled {
@@ -317,10 +377,22 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .combo-display.broken {
             color: #ff0040;
+        }
+
+        .combo-display.time-warning {
+            color: #00d4ff;
+            animation: blink 0.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
         }
 
         #start-screen, #game-over-screen {
@@ -433,11 +505,13 @@
             color: #ff0040;
             font-size: 1.2rem;
             transition: all 0.3s;
+            text-shadow: 0 0 10px rgba(255, 0, 64, 0.5);
         }
 
         .life-icon.lost {
             color: #333;
-            opacity: 0.5;
+            opacity: 0.3;
+            text-shadow: none;
         }
 
         .damage-flash {
@@ -448,15 +522,39 @@
             0%, 100% { background: transparent; }
             50% { background: rgba(255, 0, 64, 0.2); }
         }
+
+        .time-warning-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0, 212, 255, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 5;
+        }
+
+        .time-warning-overlay.active {
+            opacity: 1;
+            animation: timePulse 2s infinite;
+        }
+
+        @keyframes timePulse {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
     <div class="noise"></div>
+    <div class="time-warning-overlay" id="time-overlay"></div>
     
     <div id="game-container">
         <div class="header">
             <h1>CRAM SESSION</h1>
-            <div class="subtitle">Memory Under Pressure</div>
+            <div class="subtitle">Triple Threat Protocol</div>
         </div>
 
         <div class="stats">
@@ -480,8 +578,9 @@
                 <div class="bar">
                     <div class="bar-fill combo-fill" id="combo-bar" style="width: 0%"></div>
                 </div>
-                <div style="width: 40px; text-align: right; color: #00ff88;" id="combo-text">x1</div>
+                <div style="width: 40px; text-align: right; color: #00ff88; font-weight: bold;" id="combo-text">x1</div>
             </div>
+            
             <div class="bar-wrapper">
                 <div class="bar-label">Life</div>
                 <div class="bar">
@@ -492,6 +591,14 @@
                     <span class="life-icon">♥</span>
                     <span class="life-icon">♥</span>
                 </div>
+            </div>
+
+            <div class="bar-wrapper">
+                <div class="bar-label" style="color: #00d4ff;">Time</div>
+                <div class="bar">
+                    <div class="bar-fill time-fill" id="time-bar" style="width: 100%"></div>
+                </div>
+                <div style="width: 40px; text-align: right; color: #00d4ff; font-weight: bold;" id="time-text">100%</div>
             </div>
         </div>
 
@@ -523,12 +630,12 @@
         <div id="start-screen">
             <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">CRAM SESSION</h1>
             <div class="instructions">
-                <strong style="color: #fff;">NEW RULES:</strong><br>
-                • Memorize the sequence<br>
-                • Wrong answer = Lose Combo<br>
-                • Empty Combo + Wrong = Lose Life<br>
-                • Use UNDO to fix mistakes<br>
-                • 3 Lives total
+                <strong style="color: #fff;">TRIPLE THREAT:</strong><br>
+                <span style="color: #00ff88;">COMBO</span> = Score Multiplier<br>
+                <span style="color: #ff0040;">LIFE</span> = 3 Mistakes Max<br>
+                <span style="color: #00d4ff;">TIME</span> = Ultimate Doom Clock<br>
+                <br>
+                Wrong answer → Lose Combo → Lose Life → TIME KILLS
             </div>
             <button class="btn-primary" onclick="startGame()">START</button>
         </div>
@@ -546,19 +653,26 @@
     <script>
         // Game State
         let sequence = [];
-        let playerInputs = []; // Track what player has entered
+        let playerInputs = [];
         let playerIndex = 0;
         let level = 1;
         let score = 0;
         let bestScore = localStorage.getItem('cramBest') || 0;
         let isPlaying = false;
         
-        // New mechanics
+        // Three-tier system
         let combo = 0;
-        let maxCombo = 10; // Combo points needed for multiplier
+        let maxCombo = 10;
         let lives = 3;
         let maxLives = 3;
-        let lastWrongInput = null; // Store last wrong input for undo
+        let lastWrongInput = null;
+        
+        // TIME SYSTEM - Slow but deadly
+        let timeLeft = 100; // Percentage
+        let maxTime = 100;
+        let timeDrainRate = 0.08; // Much slower drain (was instant before)
+        let timeInterval = null;
+        let timePaused = false;
         
         const symbols = ['☕', '📚', '💻', '🎧', '⚡', '🍕'];
         
@@ -575,9 +689,12 @@
         const undoBtn = document.getElementById('undo-btn');
         const comboBar = document.getElementById('combo-bar');
         const lifeBar = document.getElementById('life-bar');
+        const timeBar = document.getElementById('time-bar');
         const comboText = document.getElementById('combo-text');
+        const timeText = document.getElementById('time-text');
         const comboDisplay = document.getElementById('combo-display');
         const livesIcons = document.getElementById('lives-icons');
+        const timeOverlay = document.getElementById('time-overlay');
 
         // Initialize
         bestEl.textContent = bestScore;
@@ -592,10 +709,57 @@
             score = 0;
             combo = 0;
             lives = 3;
+            timeLeft = 100;
             lastWrongInput = null;
+            timePaused = false;
+            
             updateStats();
             updateBars();
+            startTimeDrain();
             nextLevel();
+        }
+
+        function startTimeDrain() {
+            if (timeInterval) clearInterval(timeInterval);
+            
+            timeInterval = setInterval(() => {
+                if (!timePaused && isPlaying) {
+                    timeLeft -= timeDrainRate;
+                    
+                    // Increase drain speed slightly as game progresses
+                    if (level > 5) timeLeft -= 0.02;
+                    if (level > 10) timeLeft -= 0.03;
+                    
+                    if (timeLeft <= 0) {
+                        timeLeft = 0;
+                        gameOver('TIME UP');
+                    }
+                    
+                    updateTimeBar();
+                }
+            }, 100); // Update every 100ms for smooth drain
+        }
+
+        function updateTimeBar() {
+            timeBar.style.width = timeLeft + '%';
+            timeText.textContent = Math.ceil(timeLeft) + '%';
+            
+            // Visual warnings
+            if (timeLeft <= 20) {
+                timeBar.classList.add('critical');
+                timeOverlay.classList.add('active');
+                if (Math.floor(timeLeft) % 2 === 0) {
+                    updateComboDisplay("TIME CRITICAL!", true);
+                }
+            } else if (timeLeft <= 40) {
+                timeBar.classList.remove('critical');
+                timeOverlay.classList.remove('active');
+                timeBar.style.background = 'linear-gradient(90deg, #ffaa00, #ff0040)';
+            } else {
+                timeBar.classList.remove('critical');
+                timeOverlay.classList.remove('active');
+                timeBar.style.background = 'linear-gradient(90deg, #00d4ff, #0099cc)';
+            }
         }
 
         function nextLevel() {
@@ -603,9 +767,10 @@
             playerInputs = [];
             lastWrongInput = null;
             isPlaying = false;
+            timePaused = true; // Pause time during memorization
             undoBtn.disabled = true;
             
-            // Add new symbol to sequence
+            // Add new symbol
             const newSymbol = symbols[Math.floor(Math.random() * symbols.length)];
             sequence.push(newSymbol);
             
@@ -615,7 +780,6 @@
         function displaySequence() {
             sequenceDisplay.innerHTML = '';
             
-            // Create symbol elements for the full sequence
             sequence.forEach((sym, idx) => {
                 const div = document.createElement('div');
                 div.className = 'symbol hidden';
@@ -624,10 +788,8 @@
                 sequenceDisplay.appendChild(div);
             });
 
-            // Show sequence briefly
             const symbolEls = sequenceDisplay.querySelectorAll('.symbol');
             
-            // First show the actual sequence
             symbolEls.forEach((el, idx) => {
                 setTimeout(() => {
                     el.textContent = sequence[idx];
@@ -636,8 +798,7 @@
                 }, idx * 150);
             });
 
-            // Hide after viewing time
-            const viewTime = Math.min(2500, 1000 + (sequence.length * 300));
+            const viewTime = Math.min(3000, 1200 + (sequence.length * 250));
             
             setTimeout(() => {
                 symbolEls.forEach((el, idx) => {
@@ -652,8 +813,9 @@
 
         function startInputPhase() {
             isPlaying = true;
+            timePaused = false; // Resume time drain
             inputBtns.forEach(btn => btn.disabled = false);
-            updateComboDisplay();
+            updateComboDisplay("GO!");
         }
 
         function handleInput(symbol) {
@@ -664,10 +826,8 @@
             const symbolEl = document.getElementById(`symbol-${currentIndex}`);
             
             if (symbol === targetSymbol) {
-                // Correct input
                 handleCorrectInput(symbol, symbolEl);
             } else {
-                // Wrong input
                 handleWrongInput(symbol, symbolEl);
             }
             
@@ -681,55 +841,48 @@
             element.classList.add('correct');
             element.style.opacity = '1';
             
-            // Add combo points
+            // Combo up
             combo = Math.min(combo + 1, maxCombo);
+            
+            // Time bonus for speed! (Small recovery)
+            timeLeft = Math.min(timeLeft + 2, 100);
+            
             updateBars();
             
-            // Score calculation with combo multiplier
-            const multiplier = Math.floor(combo / 3) + 1; // Every 3 combo = +1x
+            const multiplier = Math.floor(combo / 3) + 1;
             score += 10 * level * multiplier;
             
-            // Check if level complete
             if (playerInputs.length === sequence.length) {
                 completeLevel();
             } else {
-                updateComboDisplay(`+${multiplier}x BONUS!`);
+                updateComboDisplay(`+${multiplier}x COMBO!`);
             }
         }
 
         function handleWrongInput(symbol, element) {
-            // Store for undo
             lastWrongInput = {
                 symbol: symbol,
                 index: playerInputs.length,
                 element: element
             };
             
-            // Show wrong input temporarily
             element.textContent = symbol;
             element.classList.remove('hidden');
             element.classList.add('wrong');
             element.style.opacity = '1';
             
-            // Check if we have combo to lose
+            // Time penalty for wrong answer
+            timeLeft = Math.max(timeLeft - 5, 0);
+            
             if (combo > 0) {
-                // Lose all combo, keep life
                 combo = 0;
                 updateBars();
                 updateComboDisplay("COMBO BROKEN!", true);
-                
-                // Enable undo to fix the mistake
-                undoBtn.disabled = false;
-                
-                // Visual feedback
                 comboBar.classList.add('broken');
                 setTimeout(() => comboBar.classList.remove('broken'), 500);
-                
+                undoBtn.disabled = false;
             } else {
-                // No combo buffer, lose a life
                 loseLife();
-                
-                // Still allow undo if they want to try again
                 undoBtn.disabled = false;
             }
         }
@@ -737,18 +890,19 @@
         function undoLast() {
             if (!lastWrongInput) return;
             
-            // Restore the element
             const { element, index } = lastWrongInput;
             element.textContent = '?';
             element.classList.remove('wrong');
             element.classList.add('hidden');
             element.style.opacity = '0.3';
             
-            // Clear last wrong
             lastWrongInput = null;
             undoBtn.disabled = true;
             
-            // Small time penalty or just continue
+            // Small time cost for undo
+            timeLeft = Math.max(timeLeft - 1, 0);
+            updateTimeBar();
+            
             updateComboDisplay("FIXED - CONTINUE");
         }
 
@@ -756,12 +910,11 @@
             lives--;
             updateBars();
             
-            // Visual damage
             document.body.classList.add('damage-flash');
             setTimeout(() => document.body.classList.remove('damage-flash'), 300);
             
             if (lives <= 0) {
-                gameOver();
+                gameOver('NO LIVES LEFT');
             } else {
                 updateComboDisplay(`LIFE LOST! ${lives} LEFT`, true);
             }
@@ -769,19 +922,24 @@
 
         function completeLevel() {
             isPlaying = false;
+            timePaused = true; // Pause time between levels
             inputBtns.forEach(btn => btn.disabled = true);
             undoBtn.disabled = true;
             
-            // Level completion bonus
+            // Big time bonus for completing level
+            timeLeft = Math.min(timeLeft + 15, 100);
+            
             const completionBonus = 50 * level * (Math.floor(combo / 3) + 1);
             score += completionBonus;
             
             level++;
-            updateComboDisplay(`LEVEL ${level-1} CLEAR! +${completionBonus}`);
+            updateStats();
+            updateBars();
+            updateComboDisplay(`LEVEL CLEAR! +${completionBonus} +TIME`);
             
             setTimeout(() => {
                 nextLevel();
-            }, 1200);
+            }, 1500);
         }
 
         function skipLevel() {
@@ -791,15 +949,15 @@
             }
             
             score -= 500;
+            timeLeft = Math.min(timeLeft + 10, 100); // Skip gives time too
             updateStats();
-            updateComboDisplay("SKIPPED (-500)");
+            updateBars();
+            updateComboDisplay("SKIPPED (-500) +TIME");
             
-            // Clear current and next level
             isPlaying = false;
             inputBtns.forEach(btn => btn.disabled = true);
             
             setTimeout(() => {
-                // Add two symbols to skip ahead
                 sequence.push(symbols[Math.floor(Math.random() * symbols.length)]);
                 level++;
                 nextLevel();
@@ -807,55 +965,51 @@
         }
 
         function updateBars() {
-            // Combo bar (0-10 scale)
+            // Combo
             const comboPercent = (combo / maxCombo) * 100;
             comboBar.style.width = comboPercent + '%';
-            
-            // Life bar
-            const lifePercent = (lives / maxLives) * 100;
-            lifeBar.style.width = lifePercent + '%';
-            
-            if (lives === 1) {
-                lifeBar.classList.add('low');
-            } else {
-                lifeBar.classList.remove('low');
-            }
-            
-            // Update hearts
-            const hearts = livesIcons.querySelectorAll('.life-icon');
-            hearts.forEach((heart, idx) => {
-                if (idx < lives) {
-                    heart.classList.remove('lost');
-                } else {
-                    heart.classList.add('lost');
-                }
-            });
-            
-            // Update multiplier text
             const multiplier = Math.floor(combo / 3) + 1;
             comboText.textContent = 'x' + multiplier;
+            
+            // Life
+            const lifePercent = (lives / maxLives) * 100;
+            lifeBar.style.width = lifePercent + '%';
+            if (lives === 1) lifeBar.classList.add('low');
+            else lifeBar.classList.remove('low');
+            
+            // Hearts
+            const hearts = livesIcons.querySelectorAll('.life-icon');
+            hearts.forEach((heart, idx) => {
+                heart.classList.toggle('lost', idx >= lives);
+            });
         }
 
         function updateComboDisplay(text, isError = false) {
             if (!text) {
                 comboDisplay.textContent = '';
-                comboDisplay.classList.remove('broken');
+                comboDisplay.className = 'combo-display';
                 return;
             }
             
             comboDisplay.textContent = text;
-            comboDisplay.classList.toggle('broken', isError);
+            comboDisplay.className = 'combo-display' + (isError ? ' broken' : '');
             
-            // Clear after delay
+            if (text.includes('TIME')) {
+                comboDisplay.classList.add('time-warning');
+            }
+            
             if (comboDisplay.timeout) clearTimeout(comboDisplay.timeout);
             comboDisplay.timeout = setTimeout(() => {
                 comboDisplay.textContent = '';
-                comboDisplay.classList.remove('broken');
+                comboDisplay.className = 'combo-display';
             }, 2000);
         }
 
-        function gameOver() {
+        function gameOver(reason) {
             isPlaying = false;
+            timePaused = true;
+            if (timeInterval) clearInterval(timeInterval);
+            
             inputBtns.forEach(btn => btn.disabled = true);
             undoBtn.disabled = true;
             
@@ -869,19 +1023,28 @@
                 finalScoreEl.textContent = score;
                 finalScoreEl.setAttribute('data-text', score);
                 
-                if (level <= 3) {
-                    performanceMsg.textContent = "Need more coffee... ☕";
-                    performanceMsg.style.color = '#666';
+                let msg = "";
+                let color = "#fff";
+                
+                if (reason === 'TIME UP') {
+                    msg = "TIME CONSUMED YOU ⏰";
+                    color = "#00d4ff";
+                } else if (level <= 3) {
+                    msg = "Need more coffee... ☕";
+                    color = "#666";
                 } else if (level <= 6) {
-                    performanceMsg.textContent = "Getting warmed up! 📚";
-                    performanceMsg.style.color = '#fff';
+                    msg = "Getting warmed up! 📚";
+                    color = "#fff";
                 } else if (level <= 10) {
-                    performanceMsg.textContent = "Honor Roll Material! 🎓";
-                    performanceMsg.style.color = '#00ff88';
+                    msg = "Honor Roll Material! 🎓";
+                    color = "#00ff88";
                 } else {
-                    performanceMsg.textContent = "LEGENDARY CRAMMER! 👑";
-                    performanceMsg.style.color = '#ffd700';
+                    msg = "LEGENDARY CRAMMER! 👑";
+                    color = "#ffd700";
                 }
+                
+                performanceMsg.textContent = msg;
+                performanceMsg.style.color = color;
                 
                 gameOverScreen.classList.remove('hidden-screen');
             }, 800);
@@ -897,14 +1060,14 @@
             startGame();
         }
 
-        // Keyboard support
+        // Keyboard
         document.addEventListener('keydown', (e) => {
             if (!isPlaying) return;
             
             const keyMap = {
                 '1': '☕', 'q': '☕', 'a': '☕',
                 '2': '📚', 'w': '📚', 's': '📚',
-                '3': '💻', 'e': '💻', 'd': '💻',
+                '3': '💻', 'e': '📚', 'd': '💻',
                 '4': '🎧', 'r': '🎧', 'f': '🎧',
                 '5': '⚡', 't': '⚡', 'g': '⚡',
                 '6': '🍕', 'y': '🍕', 'h': '🍕'
@@ -914,18 +1077,14 @@
                 handleInput(keyMap[e.key.toLowerCase()]);
             }
             
-            // Undo with backspace or z
             if ((e.key === 'Backspace' || e.key.toLowerCase() === 'z') && !undoBtn.disabled) {
                 e.preventDefault();
                 undoLast();
             }
         });
 
-        // Prevent zoom on double tap
         document.addEventListener('touchstart', (e) => {
-            if (e.touches.length > 1) {
-                e.preventDefault();
-            }
+            if (e.touches.length > 1) e.preventDefault();
         }, { passive: false });
     </script>
 </body>
